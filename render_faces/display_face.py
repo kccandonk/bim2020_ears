@@ -12,7 +12,7 @@ white = (255, 255, 255)
 # set width and height for display
 X = 600
 Y = 600
-surescale = 2 # TO DO-- calculate this based off model
+surescale = 1 # TO DO-- calculate this based off model
 
 def display_emotion(emotion):
 	pygame.init()
@@ -25,7 +25,7 @@ def display_emotion(emotion):
 	im_x = image.get_width()
 	im_y = image.get_height()
 	# rescale image based on sureness
-	image = pygame.transform.scale(image, (im_x*surescale,im_y*surescale))
+	image = pygame.transform.scale(image, (int(im_x*surescale),int(im_y*surescale)))
 	im_x = image.get_width()
 	im_y = image.get_height()
 	x_for_centering = X/2 - im_x/2
