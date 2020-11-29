@@ -29,8 +29,9 @@ GET_HOG_WINDOWS_FEATURES = False
 SELECTED_LABELS = []
 IMAGES_PER_LABEL = 100000 # CHANGE THIS LATER BC IDK 
 OUTPUT_FOLDER_NAME = "ears_features"
+OUTPUT_FOLDER_PATH = "/home/ubuntu/ears/bim2020_ears/aws_scripts/ears_features/"
 
-from video_processing import crop_dest 
+from video_preprocessing import crop_dest 
 
 train_dir = "/home/ubuntu/ears/PROCESSED/train/"
 test_dir = "/home/ubuntu/ears/PROCESSED/test/"
@@ -226,7 +227,7 @@ def split_data_train_test():
 
 		#Take train and test from each emotion folder
 		folder_test_size = int(number_videos / 5)
-		folder_train_size = number_videos - test_size
+		folder_train_size = number_videos - folder_test_size
 		# train_dir = "/home/ubuntu/ears/PROCESSED/train/"
 		# test_dir = "/home/ubuntu/ears/PROCESSED/test/"
 		video_counter = 0
@@ -257,7 +258,7 @@ def split_data_train_test():
 			video_counter = video_counter + 1
 
 	print("___Done splitting!___")
-	return train_np_images, train_np_images_labels, test_np_images, test_np_images_labels
+	return train_np_images, train_np_images_labels, test_np_images, test_np_image_labels
 
 
 train_np_images, train_np_images_labels, test_np_images, test_np_images_labels = split_data_train_test()
@@ -288,6 +289,7 @@ train_labels_list = []
 test_labels_list = []
 
 #_________________train category_____________-
+print("TRAIN CATEGORY")
 category = "train"
 for i in range(len(train_samples)):
 	try:
@@ -317,24 +319,26 @@ for i in range(len(train_samples)):
 				train_landmarks.append(face_landmarks)            
 			train_labels_list.append(get_new_label(train_labels[i], one_hot_encoding=ONE_HOT_ENCODING))
 			nb_images_per_label[get_new_label(train_labels[i])] += 1
-		except Exception as e:
-			print( "error in image: " + str(i) + " - " + str(e))
+	except Exception as e:
+		print( "error in image: " + str(i) + " - " + str(e))
 
-np.save(OUTPUT_FOLDER_NAME + '/' + category + '/images.npy', train_images)
+SAVE_PATH = os.path.join(OUTPUT_FOLDER_PATH, category)
+
+np.save(os.path.join(SAVE_PATH, 'images.npy'), train_images)
 if ONE_HOT_ENCODING:
-	np.save(OUTPUT_FOLDER_NAME + '/' + category + '/labels.npy', train_labels_list)
+	np.save(os.path.join(SAVE_PATH, 'labels.npy'), train_labels_list)
 else:
-	np.save(OUTPUT_FOLDER_NAME + '/' + category + '/labels.npy', train_labels_list)
+	np.save(os.path.join(SAVE_PATH,'labels.npy'), train_labels_list)
 if GET_LANDMARKS:
-	np.save(OUTPUT_FOLDER_NAME + '/' + category + '/landmarks.npy', train_landmarks)
+	np.save(os.path.join(SAVE_PATH,'landmarks.npy'),  train_landmarks)
 if GET_HOG_FEATURES or GET_HOG_WINDOWS_FEATURES:
-	np.save(OUTPUT_FOLDER_NAME + '/' + category + '/hog_features.npy', train_hog_features)
+	np.save(os.path.join(SAVE_PATH, 'hog_features.npy'), train_hog_features)
 	if GET_HOG_IMAGES:
-		np.save(OUTPUT_FOLDER_NAME + '/' + category + '/hog_images.npy', train_hog_images)
+		np.save(os.path.join(SAVE_PATH, 'hog_images.npy'), train_hog_images)
 
 
 #_________________test category_____________-
-
+print("TEST CATEGORY")
 category = "test"
 for i in range(len(test_samples)):
 	try:
@@ -364,22 +368,22 @@ for i in range(len(test_samples)):
 				test_landmarks.append(face_landmarks)            
 			test_labels_list.append(get_new_label(test_labels[i], one_hot_encoding=ONE_HOT_ENCODING))
 			nb_images_per_label[get_new_label(test_labels[i])] += 1
-		except Exception as e:
-			print( "error in image: " + str(i) + " - " + str(e))
+	except Exception as e:
+		print( "error in image: " + str(i) + " - " + str(e))
 
-np.save(OUTPUT_FOLDER_NAME + '/' + category + '/images.npy', test_images)
+SAVE_PATH = os.path.join(OUTPUT_FOLDER_PATH, category)
+
+np.save(os.path.join(SAVE_PATH, 'images.npy'), test_images)
 if ONE_HOT_ENCODING:
-	np.save(OUTPUT_FOLDER_NAME + '/' + category + '/labels.npy', test_labels_list)
+	np.save(os.path.join(SAVE_PATH, 'labels.npy'), test_labels_list)
 else:
-	np.save(OUTPUT_FOLDER_NAME + '/' + category + '/labels.npy', test_labels_list)
+	np.save(os.path.join(SAVE_PATH,'labels.npy'), test_labels_list)
 if GET_LANDMARKS:
-	np.save(OUTPUT_FOLDER_NAME + '/' + category + '/landmarks.npy', test_landmarks)
+	np.save(os.path.join(SAVE_PATH,'landmarks.npy'),  test_landmarks)
 if GET_HOG_FEATURES or GET_HOG_WINDOWS_FEATURES:
-	np.save(OUTPUT_FOLDER_NAME + '/' + category + '/hog_features.npy', test_hog_features)
+	np.save(os.path.join(SAVE_PATH, 'hog_features.npy'), test_hog_features)
 	if GET_HOG_IMAGES:
-		np.save(OUTPUT_FOLDER_NAME + '/' + category + '/hog_images.npy', test_hog_images)
-
-
+		np.save(os.path.join(SAVE_PATH, 'hog_images.npy'), test_hog_images)
 
 
 
