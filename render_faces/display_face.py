@@ -21,7 +21,7 @@ def display_emotion(emotion):
 	# set the pygame window name
 	pygame.display.set_caption('Image')
 	# load image based on emotion
-	image = pygame.image.load('emotion_faces/'+emotion+'.jpeg')
+	image = pygame.image.load('emotion_faces/'+emotion+'.jpg')
 	im_x = image.get_width()
 	im_y = image.get_height()
 	# rescale image based on sureness

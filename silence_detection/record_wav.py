@@ -19,7 +19,7 @@ RECORD_SECONDS = 1
 
 def record_wav():
 	
-	WAVE_OUTPUT_FILENAME = output_dir+"/audio_{}.wav".format(datetime.datetime.now().strftime("%H-%M-%S"))
+	WAVE_OUTPUT_FILENAME = output_dir+"/audio_{}.wav".format("a")
 
 	p = pyaudio.PyAudio()
 	vad = webrtcvad.Vad(3)
