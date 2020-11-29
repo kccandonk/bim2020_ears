@@ -9,8 +9,13 @@ import os.path
 from os import path
 import argparse
 import errno
+import scipy.misc
 import cv2
 import sys
+
+import face_recognition
+
+from crop_code import find_face_center, crop_pic
 
 #here have the cropping and formatting code??
 r_path = "/home/ubuntu/ears/DATA/RAVDESS"
@@ -18,9 +23,14 @@ path = "/home/ubuntu/ears/DATA/"
 dest = "/home/ubuntu/ears/DATA/"
 emot_path = "/home/ubuntu/ears/DATA/by_emotion"
 frames_dest = "/home/ubuntu/ears/DATA/frames_by_emotion/"
+crop_dest = "/home/ubuntu/ears/DATA/cropped_frames_by_emotion/"
 
 s_baum = os.path.join(path, "original_raw/BAUM1s_MP4_all/") 
 a_baum = os.path.join(path, "original_raw/BAUM1a_MP4_all/") 
+
+baum_dim = [854,480]
+rav_dim = [1280,720]
+crop_size = 480
 
 def declare_emotion_labels(etype):
 	# LABELS FOR THE A_BAUM DATASET
@@ -170,9 +180,53 @@ def split_videos_by_frame():
 				cap.release()
 				cv2.destroyAllWindows()
 
+
+def crop_all_data():
+	for folder in os.listdir(frames_dest):
+		folder_path = os.path.join(frames_dest, folder) 
+		folder_name = str(folder)
+		print("Emotion Folder: " + folder_name)
+		for video_folder in os.listdir(folder_path):
+			video_folder_path = os.path.join(folder_path, video_folder)
+			# MAKE THE VIDEO FILE DIRECTORY IF IT DOESN'T EXIST
+			try:
+				if not os.path.exists(crop_dest + folder_name + "/" + video_folder):
+					os.makedirs(crop_dest + folder_name + "/" + video_folder)
+			except OSError:
+				print ('Error: Creating directory of' + crop_dest + folder_name + "/" + video_folder)
+			
+			new_crop_path = os.path.join(crop_dest, folder)
+			new_crop_path = os.path.join(new_crop_path, video_folder)
+			print("newdir: "+ str(new_crop_path))
+			# CYCLE THROUCH EACH VIDEO'S FRAMES
+			for frame in os.listdir(video_folder_path):
+				# no_ext = str(frame)[:-4]
+				# frame_number = no_ext[5:]
+				frame_path = os.path.join(video_folder_path, frame)
+				image_frame = face_recognition.load_image_file(frame_path)
+				face_locations = face_recognition.face_locations(image_frame)
+
+				os.chdir(new_crop_path)
+
+				for face_location in face_locations:
+					top, right, bottom, left = face_location
+					#face_image = image_frame[top:bottom, left:right]
+					if folder_name[0] == "R":
+						dim = rav_dim
+					else: 
+						dim = baum_dim
+					center = find_face_center(top, right, bottom, left)
+					new_crop = crop_pic(image_frame, dim, crop_size, center)
+					# Saves cropped frame in jpg file
+					name = frame
+					print ('Folder: ' + video_folder + '| Creating...' + name)
+					new_crop_filepath = os.path.join(new_crop_path, name)
+					np.save(new_crop_filepath, new_crop)
+
 if __name__=='__main__':
 
 	#move_files()
-	split_videos_by_frame()
+	#split_videos_by_frame()
+	crop_all_data()
 
 	sys.exit(0)

@@ -32,7 +32,6 @@ def crop_pic(face_img, dim, crop_size, center):
 	if dim == baum_dim: 
 		startY = 0
 		endY = crop_size
-		print("found baum")
 		#determine the X
 		#TOO FAR LEFT
 		if cX < crop_mid:
@@ -48,7 +47,7 @@ def crop_pic(face_img, dim, crop_size, center):
 			c=3
 			startX = cX - crop_mid
 			endX = cX + crop_mid
-		print("case + " + str(c))
+		#print("case + " + str(c))
 	else: 
 
 		#default values
