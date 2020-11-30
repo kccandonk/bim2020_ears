@@ -30,6 +30,21 @@ def compute_normalization_parameters(data):
 
     return mean, stdev
 
+def get_smaller_image(image_array):
+
+    new = []
+    for i in range(image_array.shape[0]):
+        #print(m[i].shape)
+        large_image = image_array[i]
+        input_size = 480
+        output_size = 48
+        bin_size = input_size // output_size
+        small_image = large_image.reshape((output_size, bin_size, 
+                                           output_size, bin_size, 3)).max(3).max(1)
+        new.append(small_image)
+        
+    new = np.asarray(new)
+    return new
 
 def load_data_from_path(file_path):
     """
@@ -41,6 +56,8 @@ def load_data_from_path(file_path):
     images = np.load("images.npy")
     target= np.load("labels.npy")
     landmarks = np.load("landmarks.npy")
+
+    train = get_smaller_image(images)
 
     return train, target, landmarks
 
@@ -82,7 +99,7 @@ def normalize_data_per_row(data):
 
 #     return average_l2_err
 
-def main(batch_size, epochs, lr, val, logs_dir):
+def main(batch_size, epochs, lr, logs_dir):
     """
     Main function that performs training and test on a validation set
 
@@ -267,6 +284,6 @@ if __name__ == "__main__":
 
     # main(256, 100, 1e-4, 0.8, logs_dir)
 
-    main(args.batch_size, args.epochs, args.lr, args.val, args.logs_dir)
-    
+    main(args.batch_size, args.epochs, args.lr, args.logs_dir)
+
     sys.exit(0)
