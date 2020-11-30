@@ -11,6 +11,8 @@ import scipy.misc
 import dlib
 import cv2
 
+import imageio
+
 from skimage.feature import hog
 from PIL import Image
 #im = Image.fromarray(A)
@@ -22,16 +24,18 @@ window_size = 240
 window_step = 6
 ONE_HOT_ENCODING = True
 SAVE_IMAGES = False
-GET_LANDMARKS = False
-GET_HOG_FEATURES = False
-GET_HOG_IMAGES = False
+GET_LANDMARKS = True
+GET_HOG_FEATURES = True
+GET_HOG_IMAGES = True
 GET_HOG_WINDOWS_FEATURES = False
 SELECTED_LABELS = []
-IMAGES_PER_LABEL = 100000 # CHANGE THIS LATER BC IDK 
+IMAGES_PER_LABEL = 100000000 # CHANGE THIS LATER BC IDK 
 OUTPUT_FOLDER_NAME = "ears_features"
 OUTPUT_FOLDER_PATH = "/home/ubuntu/ears/bim2020_ears/aws_scripts/ears_features/"
+SCRIPTS = "/home/ubuntu/ears/bim2020_ears/aws_scripts"
+TEMP_PATH = os.path.join(SCRIPTS, "temp")
 
-from video_preprocessing import crop_dest 
+crop_dest = "/home/ubuntu/ears/DATA/cropped_frames_by_emotion/"
 
 train_dir = "/home/ubuntu/ears/PROCESSED/train/"
 test_dir = "/home/ubuntu/ears/PROCESSED/test/"
@@ -216,13 +220,13 @@ def split_data_train_test():
 	test_np_images = []
 	test_np_image_labels = []
 	train_np_images = []
-	train_np_images_labels = []
+	train_np_image_labels = []
+
 	for emotion_folder in os.listdir(crop_dest):
 		print("Parsing through : " + emotion_folder)
 		emotion_name, emotion_label = get_label_from_folder(emotion_folder)
 
-		emotion_folder = os.path.join(crop_dest, emotion_folder)
-		folder_name = str(emotion_folder)
+		emotion_path = os.path.join(crop_dest, emotion_folder)
 		number_videos = len(os.listdir(crop_dest))
 
 		#Take train and test from each emotion folder
@@ -231,14 +235,21 @@ def split_data_train_test():
 		# train_dir = "/home/ubuntu/ears/PROCESSED/train/"
 		# test_dir = "/home/ubuntu/ears/PROCESSED/test/"
 		video_counter = 0
-		print("Folder: " + folder_name)
-		for video in os.listdir(emotion_folder):
-			video_path = os.path.join(emotion_folder, video)
+		for video in os.listdir(emotion_path):
+			print("	for each video folder .." + video)
+			#print("  Video count: " + str(video_counter))
+			video_path = os.path.join(emotion_path, video)
 			os.chdir(video_path)
 			for frame in os.listdir(video_path):
+				#os.chdir(video_path)
+				print(video_path + "___FRAME:__" + frame)
+				frame_path = os.path.join(video_path, frame)
 				cropped_frame = np.load(frame)
+				#cropped_frame = np.load(frame_path)
+				#print("Cropped frame shape: " + str(cropped_frame.shape))
 				flat_frame = cropped_frame.flat
 				flat_frame = np.asarray(flat_frame)
+				#print("flat frame len: " + str(len(flat_frame)))
 				name = emotion_folder + "_" + video + "_" + frame[:-8]
 				#flat.shape gives you shape of (691200,)
 				if video_counter < folder_test_size: 
@@ -248,6 +259,7 @@ def split_data_train_test():
 					test_np_images.append(flat_frame)
 					test_np_image_labels.append(emotion_label)
 					#test_np_image_labels.append([emotion_name, emotion_label])
+					#print("test new len: " + str(len(test_np_images)) + "|" + str(len(test_np_image_labels)))
 
 				else: 
 					# flat_path = os.path.join(train_dir, name)
@@ -255,13 +267,17 @@ def split_data_train_test():
 					train_np_images.append(flat_frame)
 					train_np_image_labels.append(emotion_label)
 					#train_np_image_labels.append([emotion_name, emotion_label])
+					#print("train new len: " + str(len(train_np_images)) + "|" + str(len(train_np_image_labels)))
 			video_counter = video_counter + 1
 
-	print("___Done splitting!___")
-	return train_np_images, train_np_images_labels, test_np_images, test_np_image_labels
+	print("______Done splitting!_____")
+	print ("train_np_images, train_np_image_labels, test_np_images, test_np_image_labels")
+	print(str(len(train_np_images)) + "| " + str(len(train_np_image_labels)) + "| " + str(len(test_np_images)) + "| " + str(len(test_np_image_labels)) + "| ")
+	
+	return train_np_images, train_np_image_labels, test_np_images, test_np_image_labels
 
 
-train_np_images, train_np_images_labels, test_np_images, test_np_images_labels = split_data_train_test()
+train_np_images, train_np_image_labels, test_np_images, test_np_image_labels = split_data_train_test()
 
 #do for train and test
 
@@ -269,8 +285,8 @@ train_np_images, train_np_images_labels, test_np_images, test_np_images_labels =
 
 train_samples = train_np_images #category_data['pixels'].values
 test_samples = test_np_images  
-train_labels = train_np_images #labels = category_data['emotion'].values
-test_labels = test_np_images
+train_labels = train_np_image_labels #labels = category_data['emotion'].values
+test_labels = test_np_image_labels
 
 # get images and extract features
 train_landmarks = []
@@ -288,100 +304,124 @@ test_images = []
 train_labels_list = []
 test_labels_list = []
 
+train_zero_counter = 0
+test_zero_counter = 0
+
 #_________________train category_____________-
 print("TRAIN CATEGORY")
 category = "train"
 for i in range(len(train_samples)):
-	try:
+	print("Sample SHAPE = " + str(len(train_samples[i])))
+	print("test labels, selected_labels nbimges | images per label" + str(train_labels[i]) + "| " + str(SELECTED_LABELS)+ "| " + str(nb_images_per_label[get_new_label(train_labels[i])]) + "||" + str(IMAGES_PER_LABEL))
+	if len(train_samples[i]) == 0: 
+		train_zero_counter = train_zero_counter + 1
+	else:
 		if train_labels[i] in SELECTED_LABELS and nb_images_per_label[get_new_label(train_labels[i])] < IMAGES_PER_LABEL:
-			image = np.fromstring(train_samples[i], dtype=int, sep=" ").reshape((image_height, image_width))
+			print("____ INSIDE TRAIN")
+			image = np.asarray(train_samples[i]).reshape(image_height, image_width, 3)
+			#image = np.fromstring(train_samples[i], dtype=int, sep=" ").reshape((image_height, image_width))
 			train_images.append(image)
+			print("IMAGE SHAPE = " + str(image.shape))
+			print("Sample SHAPE = " + str(len(train_samples[i])))
 			# if SAVE_IMAGES:
 			# scipy.misc.imsave(category + '/' + str(i) + '.jpg', image)
-			if GET_HOG_WINDOWS_FEATURES:
-				features = sliding_hog_windows(image)
-				f, train_hog_image = hog(image, orientations=8, pixels_per_cell=(16, 16),
-										cells_per_block=(1, 1), visualise=True)
-				train_hog_features.append(features)
-				if GET_HOG_IMAGES:
-					train_hog_images.append(hog_image)
-			elif GET_HOG_FEATURES:
-				features, hog_image = hog(image, orientations=8, pixels_per_cell=(16, 16),
-										cells_per_block=(1, 1), visualise=True)
-				train_hog_features.append(features)
-				if GET_HOG_IMAGES:
-					train_hog_images.append(hog_image)
+			# print("CHECK 1")
+			# if GET_HOG_WINDOWS_FEATURES:
+			# 	print("CHECK 1 - A")
+			# 	features = sliding_hog_windows(image)
+			# 	f, train_hog_image = hog(image, orientations=8, pixels_per_cell=(16, 16),
+			# 							cells_per_block=(1, 1), visualise=True)
+			# 	train_hog_features.append(features)
+			# 	if GET_HOG_IMAGES:
+			# 		train_hog_images.append(hog_image)
+			# elif GET_HOG_FEATURES:
+			# 	print("CHECK B")
+			# 	features, hog_image = hog(image, orientations=8, pixels_per_cell=(16, 16),
+			# 							cells_per_block=(1, 1), visualise=True)
+			# 	train_hog_features.append(features)
+			# 	if GET_HOG_IMAGES:
+			# 		train_hog_images.append(hog_image)
 			if GET_LANDMARKS:
-				scipy.misc.imsave('temp.jpg', image)
+				#print("CHECK C")
+				os.chdir(TEMP_PATH)
+				imageio.imwrite('temp.jpg', image)
 				image2 = cv2.imread('temp.jpg')
 				face_rects = [dlib.rectangle(left=1, top=1, right=47, bottom=47)]
 				face_landmarks = get_landmarks(image2, face_rects)
 				train_landmarks.append(face_landmarks)            
 			train_labels_list.append(get_new_label(train_labels[i], one_hot_encoding=ONE_HOT_ENCODING))
 			nb_images_per_label[get_new_label(train_labels[i])] += 1
-	except Exception as e:
-		print( "error in image: " + str(i) + " - " + str(e))
+
 
 SAVE_PATH = os.path.join(OUTPUT_FOLDER_PATH, category)
+os.chdir(SAVE_PATH)
 
-np.save(os.path.join(SAVE_PATH, 'images.npy'), train_images)
+np.save('images.npy', train_images)
 if ONE_HOT_ENCODING:
-	np.save(os.path.join(SAVE_PATH, 'labels.npy'), train_labels_list)
+	np.save('labels.npy', train_labels_list)
 else:
-	np.save(os.path.join(SAVE_PATH,'labels.npy'), train_labels_list)
+	np.save('labels.npy', train_labels_list)
 if GET_LANDMARKS:
-	np.save(os.path.join(SAVE_PATH,'landmarks.npy'),  train_landmarks)
+	np.save('landmarks.npy',  train_landmarks)
 if GET_HOG_FEATURES or GET_HOG_WINDOWS_FEATURES:
-	np.save(os.path.join(SAVE_PATH, 'hog_features.npy'), train_hog_features)
+	np.save('hog_features.npy', train_hog_features)
 	if GET_HOG_IMAGES:
-		np.save(os.path.join(SAVE_PATH, 'hog_images.npy'), train_hog_images)
+		np.save('hog_images.npy', train_hog_images)
 
 
 #_________________test category_____________-
 print("TEST CATEGORY")
 category = "test"
 for i in range(len(test_samples)):
-	try:
+	print("Sample SHAPE = " + str(len(test_samples[i])))
+	print("test labels, selected_labels nbimges | images per label" + str(test_labels[i]) + "| " + str(SELECTED_LABELS)+ "| " + str(nb_images_per_label[get_new_label(test_labels[i])]) + "||" + str(IMAGES_PER_LABEL))
+	
+	if len(test_samples[i]) == 0: 
+		test_zero_counter = test_zero_counter + 1
+	else:
 		if test_labels[i] in SELECTED_LABELS and nb_images_per_label[get_new_label(test_labels[i])] < IMAGES_PER_LABEL:
-			image = np.fromstring(test_samples[i], dtype=int, sep=" ").reshape((image_height, image_width))
+			#image = np.fromstring(test_samples[i], dtype=int, sep=" ").reshape((image_height, image_width))
+			image = np.asarray(test_samples[i]).reshape(image_height, image_width, 3)
 			test_images.append(image)
 			# if SAVE_IMAGES:
 			# scipy.misc.imsave(category + '/' + str(i) + '.jpg', image)
-			if GET_HOG_WINDOWS_FEATURES:
-				features = sliding_hog_windows(image)
-				f, hog_image = hog(image, orientations=8, pixels_per_cell=(16, 16),
-										cells_per_block=(1, 1), visualise=True)
-				test_hog_features.append(features)
-				if GET_HOG_IMAGES:
-					test_hog_images.append(hog_image)
-			elif GET_HOG_FEATURES:
-				features, hog_image = hog(image, orientations=8, pixels_per_cell=(16, 16),
-										cells_per_block=(1, 1), visualise=True)
-				test_hog_features.append(features)
-				if GET_HOG_IMAGES:
-					test_hog_images.append(hog_image)
+			# if GET_HOG_WINDOWS_FEATURES:
+			# 	features = sliding_hog_windows(image)
+			# 	f, hog_image = hog(image, orientations=8, pixels_per_cell=(16, 16),
+			# 							cells_per_block=(1, 1), visualise=True)
+			# 	test_hog_features.append(features)
+			# 	if GET_HOG_IMAGES:
+			# 		test_hog_images.append(hog_image)
+			# elif GET_HOG_FEATURES:
+			# 	features, hog_image = hog(image, orientations=8, pixels_per_cell=(16, 16),
+			# 							cells_per_block=(1, 1), visualise=True)
+			# 	test_hog_features.append(features)
+			# 	if GET_HOG_IMAGES:
+			# 		test_hog_images.append(hog_image)
 			if GET_LANDMARKS:
-				scipy.misc.imsave('temp.jpg', image)
+				os.chdir(TEMP_PATH)
+				imageio.imwrite('temp.jpg', image)
 				image2 = cv2.imread('temp.jpg')
 				face_rects = [dlib.rectangle(left=1, top=1, right=47, bottom=47)]
 				face_landmarks = get_landmarks(image2, face_rects)
 				test_landmarks.append(face_landmarks)            
 			test_labels_list.append(get_new_label(test_labels[i], one_hot_encoding=ONE_HOT_ENCODING))
 			nb_images_per_label[get_new_label(test_labels[i])] += 1
-	except Exception as e:
-		print( "error in image: " + str(i) + " - " + str(e))
+
+print("ZEROS FOUND: " + str(train_zero_counter) + " " + str(test_zero_counter))
 
 SAVE_PATH = os.path.join(OUTPUT_FOLDER_PATH, category)
+os.chdir(SAVE_PATH)
 
-np.save(os.path.join(SAVE_PATH, 'images.npy'), test_images)
+np.save('images.npy', test_images)
 if ONE_HOT_ENCODING:
-	np.save(os.path.join(SAVE_PATH, 'labels.npy'), test_labels_list)
+	np.save('labels.npy', test_labels_list)
 else:
-	np.save(os.path.join(SAVE_PATH,'labels.npy'), test_labels_list)
+	np.save('labels.npy', test_labels_list)
 if GET_LANDMARKS:
-	np.save(os.path.join(SAVE_PATH,'landmarks.npy'),  test_landmarks)
+	np.save('landmarks.npy',  test_landmarks)
 if GET_HOG_FEATURES or GET_HOG_WINDOWS_FEATURES:
-	np.save(os.path.join(SAVE_PATH, 'hog_features.npy'), test_hog_features)
+	np.save('hog_features.npy', test_hog_features)
 	if GET_HOG_IMAGES:
 		np.save(os.path.join(SAVE_PATH, 'hog_images.npy'), test_hog_images)
 
