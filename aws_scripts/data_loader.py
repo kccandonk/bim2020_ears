@@ -14,11 +14,13 @@ def load_data(validation=False, test=True):
     test_dict = dict()
 
     if DATASET.name == "ears":
-
+        print("___________________________________________________________kp___________________")
         print("load train set...")
         # load train set
+        print("load path:  " + DATASET.train_folder + '/images.npy')
         data_dict['X'] = np.load(DATASET.train_folder + '/images.npy')
-        data_dict['X'] = data_dict['X'].reshape([-1, NETWORK.input_size, NETWORK.input_size, 1])
+        print("THE SHAPE IS " + str(data_dict['X'].shape))
+        data_dict['X'] = data_dict['X'].reshape([-1, NETWORK.input_size, NETWORK.input_size, 3])
         if NETWORK.use_landmarks:
             data_dict['X2'] = np.load(DATASET.train_folder + '/landmarks.npy')
         if NETWORK.use_hog_and_landmarks:
@@ -53,6 +55,7 @@ def load_data(validation=False, test=True):
             #         validation_dict['X2'] = validation_dict['X2'][0:DATASET.trunc_validationset_to, :, :]
             #     validation_dict['Y'] = validation_dict['Y'][0:DATASET.trunc_validationset_to, :]
         
+        print("load test set...")
         if test:
             # load test set
             test_dict['X'] = np.load(DATASET.test_folder + '/images.npy')

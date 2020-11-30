@@ -97,6 +97,6 @@ def crop_pic(face_img, dim, crop_size, center):
 			startY = dim[0] - crop_size
 			endY = dim[0]
 
-	cropped = face_img[startY:endY, int(startX):int(endX)]
+	cropped = face_img[int(startY):int(endY), int(startX):int(endX)]
 
 	return cropped

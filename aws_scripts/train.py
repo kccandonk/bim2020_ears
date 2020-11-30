@@ -16,7 +16,7 @@ from parameters import DATASET, TRAINING, HYPERPARAMS, NETWORK
 from model import build_model
 
 def train(optimizer=HYPERPARAMS.optimizer, optimizer_param=HYPERPARAMS.optimizer_param, 
-        learning_rate=HYPERPARAMS.learning_rate, keep_prob=HYPERPARAMS.keep_prob, 
+        learning_rate=HYPERPARAMS.learning_rate, rate=HYPERPARAMS.rate, 
         learning_rate_decay=HYPERPARAMS.learning_rate_decay, decay_step=HYPERPARAMS.decay_step,
         train_model=True):
 
@@ -25,12 +25,12 @@ def train(optimizer=HYPERPARAMS.optimizer, optimizer_param=HYPERPARAMS.optimizer
         #     data, validation = load_data(validation=False)
         # else:
         #     data, validation, test = load_data(validation=True, test=True)
-        data, validation, test = load_data(validation=True, test=True)
+        data, validation, test = load_data(validation=False, test=True)
 
         with tf.Graph().as_default():
                 print( "building model...")
                 network = build_model(optimizer, optimizer_param, learning_rate, 
-                          keep_prob, learning_rate_decay, decay_step)
+                          rate, learning_rate_decay, decay_step)
                 model = DNN(network, tensorboard_dir=TRAINING.logs_dir, 
                         tensorboard_verbose=0, checkpoint_path=TRAINING.checkpoint_dir,
                         max_checkpoints=TRAINING.max_checkpoints)
@@ -46,7 +46,7 @@ def train(optimizer=HYPERPARAMS.optimizer, optimizer_param=HYPERPARAMS.optimizer
                         print( "  - learning_rate = {}".format(learning_rate))
                         print( "  - learning_rate_decay = {}".format(learning_rate_decay))
                         print( "  - otimizer_param ({}) = {}".format('beta1' if optimizer == 'adam' else 'momentum', optimizer_param))
-                        print( "  - keep_prob = {}".format(keep_prob))
+                        print( "  - rate = {}".format(rate))
                         print( "  - epochs = {}".format(TRAINING.epochs))
                         print( "  - use landmarks = {}".format(NETWORK.use_landmarks))
                         print( "  - use hog + landmarks = {}".format(NETWORK.use_hog_and_landmarks))
@@ -55,6 +55,7 @@ def train(optimizer=HYPERPARAMS.optimizer, optimizer_param=HYPERPARAMS.optimizer
                         print( "  - use batchnorm after fc = {}".format(NETWORK.use_batchnorm_after_fully_connected_layers))
 
                         start_time = time.time()
+                        print("START TIME ______ ")
                         if NETWORK.use_landmarks:
                                 model.fit([data['X'], data['X2']], data['Y'],
                                         #validation_set=([validation['X'], validation['X2']], validation['Y']),
@@ -69,7 +70,7 @@ def train(optimizer=HYPERPARAMS.optimizer, optimizer_param=HYPERPARAMS.optimizer
                                         show_metric=TRAINING.vizualize,
                                         batch_size=TRAINING.batch_size,
                                         n_epoch=TRAINING.epochs)
-                                validation['X2'] = None
+                                #validation['X2'] = None
                         training_time = time.time() - start_time
                         print( "training time = {0:.1f} sec".format(training_time))
 
@@ -81,6 +82,7 @@ def train(optimizer=HYPERPARAMS.optimizer, optimizer_param=HYPERPARAMS.optimizer
                                         os.rename(TRAINING.save_model_path + ".meta", TRAINING.save_model_path)
 
                         print( "evaluating...")
+                        #validation_accuracy = evaluate(model, validation['X'], validation['X2'], validation['Y'])
                         validation_accuracy = evaluate(model, test['X'], test['X2'], test['Y'])
                         print( "  - validation accuracy = {0:.1f}".format(validation_accuracy*100))
                         return validation_accuracy
@@ -124,15 +126,6 @@ parser.add_argument("-t", "--train", default="no", help="if 'yes', launch traini
 parser.add_argument("-e", "--evaluate", default="no", help="if 'yes', launch evaluation on test dataset")
 parser.add_argument("-m", "--max_evals", help="Maximum number of evaluations during hyperparameters search")
 args = parser.parse_args()
-
-os.environ['CUDA_VISIBLE_DEVICES'] = str(0)
-
-if tf.test.gpu_device_name():
-    print("Default GPU Device:{}".format(tf.test.gpu_device_name()))
-else:
-    print("Please install GPU version of TF")
-print("Num GPUs Available: ", len(tf.config.experimental.list_physical_devices('GPU')))
-
 if args.train=="yes" or args.train=="Yes" or args.train=="YES":
         train()
 if args.evaluate=="yes" or args.evaluate=="Yes" or args.evaluate=="YES":
