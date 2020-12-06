@@ -212,14 +212,12 @@ class EARS(object):
 			# preds[1] = 0
 			# preds[2] = 0
 			# preds[5] = 0
-
+			preds = np.round(preds[0], 3)
 			# print("PREDS shape: ")
 			# print(preds[0][0])
 			# print(preds[0][1])
 			# print(preds[0][2])
 			# print(preds[0][3])
-			print("PREDS argmax: ")
-			print(preds.argmax())
 			label = CLASS_LABELS[preds.argmax()]
 			print("NEW LABEL IS: " + label)
 			self.currentEmotion = label
