@@ -10,6 +10,10 @@ import wave
 import webrtcvad
 import sys
 import os
+import dlib
+
+import imageio
+#from PIL import Image 
 
 import pygame
 
@@ -35,10 +39,38 @@ FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
 RECORD_SECONDS = 0.5
+BATCH_SIZE = 16
+CWD = ""
+MAIN_DIR = os.getcwd()
 
 FACE_CLASSIFIER = cv2.CascadeClassifier('./Haarcascades/haarcascade_frontalface_default.xml')
 
-CLASS_LABELS = {0: 'mad', 1: 'NA', 2: 'NA', 3: 'happy', 4: 'sad', 5: 'NA', 6: 'neutral'}
+#CLASS_LABELS = {0: 'mad', 1: 'NA', 2: 'NA', 3: 'happy', 4: 'sad', 5: 'NA', 6: 'neutral'}
+#CLASS_LABELS = {0: 'mad', 3: 'happy', 4: 'sad', 6: 'neutral'}
+CLASS_LABELS = {0: 'mad', 1: 'happy', 2: 'sad', 3: 'neutral'} #because of one hot incoding
+#ngry, Happy, Sad, and Neutral
+
+# loading Dlib predictor and preparing arrays:
+print( "preparing")
+predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
+
+def return_frame_landmarks(cropped_image):
+	os.chdir('./temp_files')
+	CWD = os.getcwd()
+	imageio.imwrite('temp.jpg', cropped_image)
+	image2 = cv2.imread('temp.jpg')
+	face_rects = [dlib.rectangle(left=1, top=1, right=47, bottom=47)]
+	face_landmarks = get_landmarks(image2, face_rects)
+	os.chdir(MAIN_DIR)
+	return face_landmarks
+
+def get_landmarks(image, rects):
+    # this function have been copied from http://bit.ly/2cj7Fpq
+    if len(rects) > 1:
+        raise BaseException("TooManyFaces")
+    if len(rects) == 0:
+        raise BaseException("NoFaces")
+    return np.matrix([[p.x, p.y] for p in predictor(image, rects[0]).parts()])
 
 def face_detector(img):
 	    # Convert image to grayscale
@@ -49,13 +81,16 @@ def face_detector(img):
 	    
 	    for (x,y,w,h) in faces:
 	        cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
-	        roi_gray = gray[y:y+h, x:x+w]
+	        #roi_gray = gray[y:y+h, x:x+w]
+	        roi_img = img[y:y+h, x:x+w]
 
 	    try:
-	        roi_gray = cv2.resize(roi_gray, (48, 48), interpolation = cv2.INTER_AREA)
+	        #roi_gray = cv2.resize(roi_gray, (48, 48), interpolation = cv2.INTER_AREA)
+	        roi_img = cv2.resize(roi_img, (48, 48), interpolation = cv2.INTER_AREA)
 	    except:
 	        return (x,w,y,h), np.zeros((48,48), np.uint8), img
-	    return (x,w,y,h), roi_gray, img
+	    #return (x,w,y,h), roi_gray, img
+	    return (x,w,y,h), roi_img, img
 
 class EARS(object):
 
@@ -67,7 +102,8 @@ class EARS(object):
 		self.hasSpoken = False
 		self.runningSilence = 0
 		self.keepGoing = True
-		self.classifier = tf.keras.models.load_model('./emotion_detector_models/_mini_xception.100_0.65.hdf5') #model_v6_23.hdf5')
+		#self.classifier = tf.keras.models.load_model('./emotion_detector_models/_mini_xception.100_0.65.hdf5') #model_v6_23.hdf5')
+		self.classifier = tf.keras.models.load_model('./emotion_detector_models/ears_model_11-30-2020-13-19.hdf5') #last from drive')
 		self.cap = cv2.VideoCapture(0)
 
 	def run(self):
@@ -99,9 +135,9 @@ class EARS(object):
 				cv2.destroyAllWindows()
 				time.sleep(2)
 
-
 	def responsePolicy(self):
 		elapsed_time = time.time()-self.startTime
+		os.chdir(MAIN_DIR)
 		if elapsed_time < START_THRESHOLD or self.hasSpoken==False:
 			image = pygame.image.load('images/EARS_initial.jpg')
 		elif self.runningSilence < SILENCE_THRESHOLD:
@@ -111,7 +147,6 @@ class EARS(object):
 			image = pygame.image.load('responses/'+response_filename+'.jpg')
 			self.keepGoing = False
 		return image
-
 
 	def retrieveResponse(self):
 		counts = Counter()
@@ -159,17 +194,34 @@ class EARS(object):
 	def predict_emotions(self):
 		print("predict")
 		ret, frame = self.cap.read()
-		rect, face, image = face_detector(frame)
+		rect, face, image = face_detector(frame) #image is the same as frame
+		#Get landmarks for the specific frame
+		frame_landmarks = return_frame_landmarks(face)
 		if np.sum([face]) != 0.0:
 			roi = face.astype("float") / 255.0
 			roi = img_to_array(roi)
 			roi = np.expand_dims(roi, axis=0)
-			# make a prediction on the ROI, then lookup the class
-			preds = self.classifier.predict(roi)[0]
-			preds[1] = 0
-			preds[2] = 0
-			preds[5] = 0
+			frame_landmarks = np.expand_dims(frame_landmarks, axis=0)
+			print("HERE IS WHAT ROI LOOKS LIKE")
+			print(roi.shape)
+			print("HERE IS WHAT LANDMARKS LOOKS LIKE")
+			print(frame_landmarks.shape)
+			# make a prediction on the ROI and landmarks, then lookup the class
+			preds = self.classifier.predict([roi, frame_landmarks], batch_size=BATCH_SIZE)
+			#angry, Happy, Sad, and Neutral
+			# preds[1] = 0
+			# preds[2] = 0
+			# preds[5] = 0
+
+			# print("PREDS shape: ")
+			# print(preds[0][0])
+			# print(preds[0][1])
+			# print(preds[0][2])
+			# print(preds[0][3])
+			print("PREDS argmax: ")
+			print(preds.argmax())
 			label = CLASS_LABELS[preds.argmax()]
+			print("NEW LABEL IS: " + label)
 			self.currentEmotion = label
 			self.emotionTrajectory.append(label)
 
