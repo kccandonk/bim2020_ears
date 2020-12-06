@@ -103,7 +103,7 @@ class EARS(object):
 		self.runningSilence = 0
 		self.keepGoing = True
 		#self.classifier = tf.keras.models.load_model('./emotion_detector_models/_mini_xception.100_0.65.hdf5') #model_v6_23.hdf5')
-		self.classifier = tf.keras.models.load_model('./emotion_detector_models/ears_model_11-30-2020-13-19.hdf5') #last from drive')
+		self.classifier = tf.keras.models.load_model('./emotion_detector_models/ears_model_12-06-2020-19-25.hdf5') #last from drive')
 		self.cap = cv2.VideoCapture(0)
 
 	def run(self):
