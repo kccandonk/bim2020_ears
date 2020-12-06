@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 """
+modified from 
 @AmineHorseman
 Sep, 1st, 2016
 """
@@ -14,8 +15,7 @@ def load_data(validation=False, test=True):
     test_dict = dict()
 
     if DATASET.name == "ears":
-        print("___________________________________________________________kp___________________")
-        print("load train set...")
+        print("_______________________________________load train set..._______________________________________")
         # load train set
         print("load path:  " + DATASET.train_folder + '/images.npy')
         data_dict['X'] = np.load(DATASET.train_folder + '/images.npy')
@@ -36,26 +36,7 @@ def load_data(validation=False, test=True):
                 data_dict['X2'] = data_dict['X2'][0:DATASET.trunc_trainset_to, :, :]
             data_dict['Y'] = data_dict['Y'][0:DATASET.trunc_trainset_to, :]
 
-        #if validation:
-            # load validation set
-            # validation_dict['X'] = np.load(DATASET.validation_folder + '/images.npy')
-            # validation_dict['X'] = validation_dict['X'].reshape([-1, NETWORK.input_size, NETWORK.input_size, 1])
-            # if NETWORK.use_landmarks:
-            #     validation_dict['X2'] = np.load(DATASET.validation_folder + '/landmarks.npy')
-            # if NETWORK.use_hog_and_landmarks:
-            #     validation_dict['X2'] = np.load(DATASET.validation_folder + '/landmarks.npy')
-            #     validation_dict['X2'] = np.array([x.flatten() for x in validation_dict['X2']])
-            #     validation_dict['X2'] = np.concatenate((validation_dict['X2'], np.load(DATASET.validation_folder + '/hog_features.npy')), axis=1)
-            # validation_dict['Y'] = np.load(DATASET.validation_folder + '/labels.npy')
-            # if DATASET.trunc_validationset_to > 0:
-            #     validation_dict['X'] = validation_dict['X'][0:DATASET.trunc_validationset_to, :, :]
-            #     if NETWORK.use_landmarks and NETWORK.use_hog_and_landmarks:
-            #         validation_dict['X2'] = validation_dict['X2'][0:DATASET.trunc_validationset_to, :]
-            #     elif NETWORK.use_landmarks:
-            #         validation_dict['X2'] = validation_dict['X2'][0:DATASET.trunc_validationset_to, :, :]
-            #     validation_dict['Y'] = validation_dict['Y'][0:DATASET.trunc_validationset_to, :]
-        
-        print("load test set...")
+        print("_______________________________________load test set..._______________________________________")
         if test:
             # load test set
             test_dict['X'] = np.load(DATASET.test_folder + '/images.npy')

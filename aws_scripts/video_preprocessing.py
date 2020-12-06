@@ -18,20 +18,44 @@ import face_recognition
 
 from crop_code import find_face_center, crop_pic
 
-#here have the cropping and formatting code??
-r_path = "/home/ubuntu/ears/DATA/RAVDESS"
-path = "/home/ubuntu/ears/DATA/"
-dest = "/home/ubuntu/ears/DATA/"
-emot_path = "/home/ubuntu/ears/DATA/emotion_data"
-frames_dest = "/home/ubuntu/ears/DATA/frames_by_emotion/"
-crop_dest = "/home/ubuntu/ears/DATA/cropped_frames_by_emotion/"
+#AWS local
+# r_path = "/home/ubuntu/ears/DATA/RAVDESS"
+# path = "/home/ubuntu/ears/DATA/"
+# dest = "/home/ubuntu/ears/DATA/"
+# emot_path = "/home/ubuntu/ears/DATA/emotion_data"
+# frames_dest = "/home/ubuntu/ears/DATA/frames_by_emotion/"
+# crop_dest = "/home/ubuntu/ears/DATA/cropped_frames_by_emotion/"
 
-s_baum = os.path.join(path, "original_raw/BAUM1s_MP4_all/") 
-a_baum = os.path.join(path, "original_raw/BAUM1a_MP4_all/") 
+# s_baum = os.path.join(path, "original_raw/BAUM1s_MP4_all/") 
+# a_baum = os.path.join(path, "original_raw/BAUM1a_MP4_all/") 
+
+#Kaitlynn local paths
+# r_path = "/home/ubuntu/ears/DATA/RAVDESS"
+# path = "/home/ubuntu/ears/DATA/"
+# dest = "/home/ubuntu/ears/DATA/"
+emot_path = "/Users/Kaitlynn/Desktop/CPSC_459/bim2020_ears/DATA/emotion_data"
+frames_dest = "/Users/Kaitlynn/Desktop/CPSC_459/bim2020_ears/DATA/frames_by_emotion/"
+crop_dest = "/Users/Kaitlynn/Desktop/CPSC_459/bim2020_ears/DATA/cropped_frames_by_emotion/"
+
 
 baum_dim = [854,480]
 rav_dim = [1280,720]
 crop_size = 480
+UPPER_BOUND = 375
+
+
+
+def get_emotion_index(folder_name):
+	#ANGER, SAD, HAPPY, NEUTRAL
+	if folder_name[2] == "A":
+		index = 0
+	elif folder_name[2] == "S":
+		index = 1
+	elif folder_name[2] == "H":
+		index = 2
+	elif folder_name[2] == "N":
+		index = 3
+	return index
 
 def declare_emotion_labels(etype):
 	# LABELS FOR THE A_BAUM DATASET
@@ -107,7 +131,7 @@ def Rcheck_emotion(filename, emotion, current_path):
     else:
         return "none"
 
-#separate the baum datset by emotion 
+#separate the datasets by emotion 
 def move_files():
 	#FOR THE BAUM_S DATA
 	for folder in os.listdir(s_baum):
@@ -145,14 +169,22 @@ def move_files():
 	            if emotion != "none":
 	                print("moving actor:" + actor + " and emotion:"+ emotion)
 	
-def split_videos_by_frame():
+def split_videos_by_frame(VIDEO_LIMIT):
+	
+	E_VIDCOUNTER = np.array([0,0,0,0]) #emotion video counter
+
 	for folder in os.listdir(emot_path):
-			folder_path = os.path.join(emot_path, folder)
-			folder_name = str(folder)
-			print("Folder: " + folder_name)
-			for video in os.listdir(folder_path):
-				video_path = os.path.join(folder_path, video)
-				video_name = str(video)
+		folder_path = os.path.join(emot_path, folder)
+		folder_name = str(folder)
+		print("Folder: " + folder_name)
+		print("_________________ENTERING PART 1:____________________")
+		emotion_index = get_emotion_index(folder_name)
+		VIDEO_LIMIT_COUNTER = E_VIDCOUNTER[emotion_index]
+		for video in os.listdir(folder_path):
+			video_path = os.path.join(folder_path, video)
+			video_name = str(video)
+			print("VIDEO LIMIT is CURRENTLY: " + str(VIDEO_LIMIT_COUNTER))
+			if VIDEO_LIMIT_COUNTER < VIDEO_LIMIT:
 				# code modified from: https://gist.github.com/keithweaver/70df4922fec74ea87405b83840b45d57
 				# Playing video from file:
 				cap = cv2.VideoCapture(video_path)
@@ -174,56 +206,73 @@ def split_videos_by_frame():
 						break
 					# Saves image of the current frame in jpg file
 					name = './' + video + '/frame' + str(currentFrame) + '.jpg'
-					print ('Folder: '+ folder_name + '| Creating...' + name)
+					#print ('Folder: '+ folder_name + '| Creating...' + name)
 					cv2.imwrite(name, frame)
 					# To stop duplicate images
 					currentFrame += 1
 				os.chdir(current)
 				# When everything done, release the capture
 				cap.release()
-				cv2.destroyAllWindows()            
+				cv2.destroyAllWindows()   
+				VIDEO_LIMIT_COUNTER = VIDEO_LIMIT_COUNTER + 1  
+				E_VIDCOUNTER[emotion_index] = VIDEO_LIMIT_COUNTER
+			else:
+				print("HIT MAX: " + str(E_VIDCOUNTER[emotion_index]) + "emotion index: " + str(emotion_index))
 
-def crop_all_data():
+
+def crop_all_data(VIDEO_LIMIT):
+	
+	E_VIDCOUNTER = np.array([0,0,0,0]) #emotion video counter
+
 	for folder in os.listdir(frames_dest):
 		folder_path = os.path.join(frames_dest, folder) 
 		folder_name = str(folder)
 		print("Emotion Folder: " + folder_name)
+		print("_________________ENTERING PART 2:____________________")
+		emotion_index = get_emotion_index(folder_name)
+		VIDEO_LIMIT_COUNTER = E_VIDCOUNTER[emotion_index]
 		for video_folder in os.listdir(folder_path):
 			video_folder_path = os.path.join(folder_path, video_folder)
-			# MAKE THE VIDEO FILE DIRECTORY IF IT DOESN'T EXIST
-			try:
-				if not os.path.exists(crop_dest + folder_name + "/" + video_folder):
-					os.makedirs(crop_dest + folder_name + "/" + video_folder)
-			except OSError:
-				print ('Error: Creating directory of' + crop_dest + folder_name + "/" + video_folder)
-			
-			new_crop_path = os.path.join(crop_dest, folder)
-			new_crop_path = os.path.join(new_crop_path, video_folder)
-			print("newdir: "+ str(new_crop_path))
-			# CYCLE THROUCH EACH VIDEO'S FRAMES
-			for frame in os.listdir(video_folder_path):
-				# no_ext = str(frame)[:-4]
-				# frame_number = no_ext[5:]
-				frame_path = os.path.join(video_folder_path, frame)
-				image_frame = face_recognition.load_image_file(frame_path)
-				face_locations = face_recognition.face_locations(image_frame)
+			print("VIDEO LIMIT is CURRENTLY: " + str(VIDEO_LIMIT_COUNTER))
+			if VIDEO_LIMIT_COUNTER < VIDEO_LIMIT:
+				# MAKE THE VIDEO FILE DIRECTORY IF IT DOESN'T EXIST
+				try:
+					if not os.path.exists(crop_dest + folder_name + "/" + video_folder):
+						os.makedirs(crop_dest + folder_name + "/" + video_folder)
+				except OSError:
+					print ('Error: Creating directory of' + crop_dest + folder_name + "/" + video_folder)
+				
+				new_crop_path = os.path.join(crop_dest, folder)
+				new_crop_path = os.path.join(new_crop_path, video_folder)
+				print("newdir: "+ str(new_crop_path))
+				# CYCLE THROUCH EACH VIDEO'S FRAMES
+				for frame in os.listdir(video_folder_path):
+					# no_ext = str(frame)[:-4]
+					# frame_number = no_ext[5:]
+					frame_path = os.path.join(video_folder_path, frame)
+					image_frame = face_recognition.load_image_file(frame_path)
+					face_locations = face_recognition.face_locations(image_frame)
 
-				os.chdir(new_crop_path)
+					os.chdir(new_crop_path)
 
-				for face_location in face_locations:
-					top, right, bottom, left = face_location
-					#face_image = image_frame[top:bottom, left:right]
-					if folder_name[0] == "R":
-						dim = rav_dim
-					else: 
-						dim = baum_dim
-					center = find_face_center(top, right, bottom, left)
-					new_crop = crop_pic(image_frame, dim, crop_size, center)
-					# Saves cropped frame in jpg file
-					name = frame
-					print ('Folder: ' + video_folder + '| Creating...' + name)
-					new_crop_filepath = os.path.join(new_crop_path, name)
-					np.save(new_crop_filepath, new_crop)
+					for face_location in face_locations:
+						top, right, bottom, left = face_location
+						#face_image = image_frame[top:bottom, left:right]
+						if folder_name[0] == "R":
+							dim = rav_dim
+						else: 
+							dim = baum_dim
+						center = find_face_center(top, right, bottom, left)
+						new_crop = crop_pic(image_frame, dim, crop_size, center)
+						# Saves cropped frame in jpg file
+						name = frame
+						#print ('Folder: ' + video_folder + '| Creating...' + name)
+						new_crop_filepath = os.path.join(new_crop_path, name)
+						np.save(new_crop_filepath, new_crop)
+				VIDEO_LIMIT_COUNTER = VIDEO_LIMIT_COUNTER + 1  
+				E_VIDCOUNTER[emotion_index] = VIDEO_LIMIT_COUNTER
+			else:
+				print("HIT MAX: " + str(E_VIDCOUNTER[emotion_index]) + "emotion index: " + str(emotion_index))
 
 def split_videos_by_frame_and_crop(CURRENT_EMOTION_FOLDER, VIDEO_LIMIT = 10, VIDEO_LIMIT_COUNTER = 0):
 	for folder in os.listdir(crop_dest):
@@ -327,15 +376,19 @@ def split_videos_by_frame_and_crop(CURRENT_EMOTION_FOLDER, VIDEO_LIMIT = 10, VID
 if __name__=='__main__':
 
 	#move_files()
+	#split_videos_by_frame():
 	#crop_all_data()
+
+	#split_videos_by_frame(UPPER_BOUND)
+	crop_all_data(UPPER_BOUND)
 
 	#emotion_list = ["A_Anger", "A_Happiness", "A_Sadness","R_Anger"," R_Happiness","R_Neutral","R_Sadness" ,"S_Anger", "S_Happiness", "S_Neutral" , "S_Sadness"]
 	#emotion_list = ["R_Happiness", "R_Sadness" ,"S_Anger", "S_Happiness", "S_Neutral" , "S_Sadness"]
 	#emotion_list = ["S_Happiness", "S_Neutral" , "S_Sadness"]
-	emotion_list = ["S_Sadness"]
-	for folder in emotion_list:
-		EMOTION = folder
-		split_videos_by_frame_and_crop(EMOTION, 10, 0)
+	# emotion_list = ["S_Sadness"]
+	# for folder in emotion_list:
+	# 	EMOTION = folder
+	# 	split_videos_by_frame_and_crop(EMOTION, 10, 0)
 
 	sys.exit(0)
 

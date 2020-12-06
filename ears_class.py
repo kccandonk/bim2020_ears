@@ -202,10 +202,10 @@ class EARS(object):
 			roi = img_to_array(roi)
 			roi = np.expand_dims(roi, axis=0)
 			frame_landmarks = np.expand_dims(frame_landmarks, axis=0)
-			print("HERE IS WHAT ROI LOOKS LIKE")
-			print(roi.shape)
-			print("HERE IS WHAT LANDMARKS LOOKS LIKE")
-			print(frame_landmarks.shape)
+			# print("HERE IS WHAT ROI LOOKS LIKE")
+			# print(roi.shape)
+			# print("HERE IS WHAT LANDMARKS LOOKS LIKE")
+			# print(frame_landmarks.shape)
 			# make a prediction on the ROI and landmarks, then lookup the class
 			preds = self.classifier.predict([roi, frame_landmarks], batch_size=BATCH_SIZE)
 			#angry, Happy, Sad, and Neutral
