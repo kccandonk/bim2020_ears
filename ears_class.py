@@ -59,7 +59,7 @@ def return_frame_landmarks(cropped_image):
 	CWD = os.getcwd()
 	imageio.imwrite('temp.jpg', cropped_image)
 	image2 = cv2.imread('temp.jpg')
-	face_rects = [dlib.rectangle(left=1, top=1, right=47, bottom=47)]
+	face_rects = [dlib.rectangle()]
 	face_landmarks = get_landmarks(image2, face_rects)
 	os.chdir(MAIN_DIR)
 	return face_landmarks
@@ -81,16 +81,16 @@ def face_detector(img):
 	    
 	    for (x,y,w,h) in faces:
 	        cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
-	        #roi_gray = gray[y:y+h, x:x+w]
-	        roi_img = img[y:y+h, x:x+w]
+	        roi_gray = gray[y:y+h, x:x+w]
+	        #roi_img = img[y:y+h, x:x+w]
 
 	    try:
-	        #roi_gray = cv2.resize(roi_gray, (48, 48), interpolation = cv2.INTER_AREA)
-	        roi_img = cv2.resize(roi_img, (48, 48), interpolation = cv2.INTER_AREA)
+	        roi_gray = cv2.resize(roi_gray, (48, 48), interpolation = cv2.INTER_AREA)
+	        #roi_img = cv2.resize(roi_img, (48, 48), interpolation = cv2.INTER_AREA)
 	    except:
 	        return (x,w,y,h), np.zeros((48,48), np.uint8), img
-	    #return (x,w,y,h), roi_gray, img
-	    return (x,w,y,h), roi_img, img
+	    return (x,w,y,h), roi_gray, img
+	    #return (x,w,y,h), roi_img, img
 
 class EARS(object):
 
@@ -103,7 +103,7 @@ class EARS(object):
 		self.runningSilence = 0
 		self.keepGoing = True
 		#self.classifier = tf.keras.models.load_model('./emotion_detector_models/_mini_xception.100_0.65.hdf5') #model_v6_23.hdf5')
-		self.classifier = tf.keras.models.load_model('./emotion_detector_models/ears_model_12-06-2020-19-25.hdf5') #last from drive')
+		self.classifier = tf.keras.models.load_model('./emotion_detector_models/ears_model_tinydark12-07-2020-06-06.hdf5') #last from drive')
 		self.cap = cv2.VideoCapture(0)
 
 	def run(self):
@@ -196,7 +196,8 @@ class EARS(object):
 		ret, frame = self.cap.read()
 		rect, face, image = face_detector(frame) #image is the same as frame
 		#Get landmarks for the specific frame
-		frame_landmarks = return_frame_landmarks(face)
+		#frame_landmarks = return_frame_landmarks(face)
+		frame_landmarks = return_frame_landmarks(frame)
 		if np.sum([face]) != 0.0:
 			roi = face.astype("float") / 255.0
 			roi = img_to_array(roi)
@@ -212,7 +213,8 @@ class EARS(object):
 			# preds[1] = 0
 			# preds[2] = 0
 			# preds[5] = 0
-			preds = np.round(preds[0], 3)
+			preds = np.round(preds[0], 5)
+			print(preds)
 			# print("PREDS shape: ")
 			# print(preds[0][0])
 			# print(preds[0][1])
