@@ -82,15 +82,12 @@ def face_detector(img):
 	    for (x,y,w,h) in faces:
 	        cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
 	        roi_gray = gray[y:y+h, x:x+w]
-	        #roi_img = img[y:y+h, x:x+w]
 
 	    try:
 	        roi_gray = cv2.resize(roi_gray, (48, 48), interpolation = cv2.INTER_AREA)
-	        #roi_img = cv2.resize(roi_img, (48, 48), interpolation = cv2.INTER_AREA)
 	    except:
 	        return (x,w,y,h), np.zeros((48,48), np.uint8), img
 	    return (x,w,y,h), roi_gray, img
-	    #return (x,w,y,h), roi_img, img
 
 class EARS(object):
 
@@ -196,17 +193,12 @@ class EARS(object):
 		ret, frame = self.cap.read()
 		rect, face, image = face_detector(frame) #image is the same as frame
 		#Get landmarks for the specific frame
-		#frame_landmarks = return_frame_landmarks(face)
 		frame_landmarks = return_frame_landmarks(frame)
 		if np.sum([face]) != 0.0:
 			roi = face.astype("float") / 255.0
 			roi = img_to_array(roi)
 			roi = np.expand_dims(roi, axis=0)
 			frame_landmarks = np.expand_dims(frame_landmarks, axis=0)
-			# print("HERE IS WHAT ROI LOOKS LIKE")
-			# print(roi.shape)
-			# print("HERE IS WHAT LANDMARKS LOOKS LIKE")
-			# print(frame_landmarks.shape)
 			# make a prediction on the ROI and landmarks, then lookup the class
 			preds = self.classifier.predict([roi, frame_landmarks], batch_size=BATCH_SIZE)
 			#angry, Happy, Sad, and Neutral
@@ -215,11 +207,6 @@ class EARS(object):
 			# preds[5] = 0
 			preds = np.round(preds[0], 3)
 			print(preds)
-			# print("PREDS shape: ")
-			# print(preds[0][0])
-			# print(preds[0][1])
-			# print(preds[0][2])
-			# print(preds[0][3])
 			label = CLASS_LABELS[preds.argmax()]
 			#print("NEW LABEL IS: " + label)
 			self.currentEmotion = label
