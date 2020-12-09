@@ -24,17 +24,48 @@ This repo contains all the code to run our emotionally-ware reaction system and 
 All of the model training and testing code was written on Google Colaboratory to facilitate training. The loading of our data and writing out of our models and logs occurs on Google Drive through Google File Stream. Open the ``model_train_eval.ipynb`` file in Google Colaboratory and execute each code block one at a time. Tensorboard data will be saved to ``logs/``, which wil be located under a ``/content`` root directory in Google Colaboratory.
 
 ## Getting Started
-First the following commands to load the necessary packages and files needed for EARS.
+
+### Requirements
+* Python 3.6+
+* ```pip```
+* ```git```
+
+### Installation
+1. First clone the git respository ```bim2020_ears``` into your machine to load the necessary files for EARS.
 ```
-git clone https://github.com/kccandonk/bim2020_ears.git
-EARS_install_python_deps.sh -- kate fix this
+$ git clone https://github.com/kccandonk/bim2020_ears.git
+```
+2. Set up virtual environment for EARS system.
+```
+$ python -m pip install --upgrade pip
+$ python -m pip install --user virtualenv
+$ python -m venv ears_env
+$ source ears_env/bin/activate
+```
+3. Navigate to ```bim2020_ears``` directory.
+```
+$cd bim2020_ears
+```
+4. Install necessary packages with ```EARS_install_python_deps.sh```.
+```
+$ ./EARS_install_python_deps.sh
+```
+5. You can deactivate the virtual environment for EARS with the ```deactivate``` command.
+```
+$ deactivate
 ```
 
 ## Running EARS
+If your virtual environment for EARS system is not active, activate the virtual environment.
+```
+$ source ears_env/bin/activate
+```
 Run the code below to autonomously start EARS. The system will close on its own when finished. Repeat the command if you wish to re-use our system.
 ```
-python ears.py
+$ python ears.py
 ```
-
-
+If you want to run the version of EARS with the pre-trained emotion classifier, you can run ```ears_pretrained.py```.
+```
+$ python ears_pretrained.py
+```
 
