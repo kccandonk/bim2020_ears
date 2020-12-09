@@ -22,6 +22,12 @@ This repo contains all the code to run our emotionally-ware reaction system and 
 * ``silence_detection`` KATE TO DO
 * ``ears_class.py`` script that autonomously runs our EARS system
 
+## Data Pre-Processing
+
+## Model Training and Testing
+
+## Running EARS
+
 
 
 
