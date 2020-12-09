@@ -21,12 +21,20 @@ This repo contains all the code to run our emotionally-ware reaction system and 
 * ``ears.py`` script that autonomously runs our EARS system
 
 ## Model Training and Testing
-All of the model training and testing code was written on Google Colaboratory to facilitate training. The loading of our data and writing out of our models and logs occurs on Google Drive through Google File Stream
+All of the model training and testing code was written on Google Colaboratory to facilitate training. The loading of our data and writing out of our models and logs occurs on Google Drive through Google File Stream. Open the ``model_train_eval.ipynb`` file in Google Colaboratory and execute each code block one at a time. Tensorboard data will be saved to ``logs/``, which wil be located under a ``/content`` root directory in Google Colaboratory.
+
+## Getting Started
+First the following commands to load the necessary packages and files needed for EARS.
+```
+git clone https://github.com/kccandonk/bim2020_ears.git
+EARS_install_python_deps.sh -- kate fix this
+```
 
 ## Running EARS
-First run the file ``EARS_install_python_deps.s`` to load the necessary packages and files needed for EARS to function. 
-In the linux terminal window, run ``python ears.py`` to autonomously start EARS. The system will close on its own when finished. Run the command again if you wish to re-use our system.
-
+Run the code below to autonomously start EARS. The system will close on its own when finished. Repeat the command if you wish to re-use our system.
+```
+python ears.py
+```
 
 
 
