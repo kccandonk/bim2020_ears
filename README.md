@@ -18,7 +18,7 @@ This repo contains all the code to run our emotionally-ware reaction system and 
 * ``render_faces`` KATE TO DO
 * ``responses`` contains the various images that could potentially be displayed at the end of the users' interaction with our system
 * ``silence_detection`` KATE TO DO
-* ``ears_class.py`` script that autonomously runs our EARS system
+* ``ears.py`` script that autonomously runs our EARS system
 
 ## Model Training and Testing
 All of the model training and testing code was written on Google Colaboratory to facilitate training. The loading of our data and writing out of our models and logs occurs on Google Drive through Google File Stream
