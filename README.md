@@ -14,9 +14,7 @@ This repo contains all the code to run our emotionally-ware reaction system and 
 * ``emotion_detector_model`` contains various models saved as an .hdf5 (including a pretrained model and our trained custom model) that can be loaded into our EARS system.
 * ``images`` contains the intial image displayed by our virtual agent when running the system. 
 * ``preprocessing_scripts`` contains the scripts we used to preprocess the BAUM-1 and RAVDESS datasets.  
-    * ``crop_code.py``: to do
-    * ``ears_convert_to_images_and_landmarks.py``: to do    
-    * ``video_processing.py``: to do
+    * ``video_processing.py``: the main script to obtain the images, landmarks and emotion labels lists from the data.
 * ``render_faces`` KATE TO DO
 * ``responses`` contains the various images that could potentially be displayed at the end of the users' interaction with our system
 * ``silence_detection`` KATE TO DO
