@@ -103,7 +103,7 @@ class EARS(object):
 		self.runningSilence = 0
 		self.keepGoing = True
 		#self.classifier = tf.keras.models.load_model('./emotion_detector_models/_mini_xception.100_0.65.hdf5') #model_v6_23.hdf5')
-		self.classifier = tf.keras.models.load_model('./emotion_detector_models/ears_model_tinydark12-07-2020-06-06.hdf5') #last from drive')
+		self.classifier = tf.keras.models.load_model('./emotion_detector_models/ears_model_full_model_big_dataset_12-08-2020-15-30.hdf5') #last from drive')
 		self.cap = cv2.VideoCapture(0)
 
 	def run(self):
@@ -213,7 +213,7 @@ class EARS(object):
 			# preds[1] = 0
 			# preds[2] = 0
 			# preds[5] = 0
-			preds = np.round(preds[0], 5)
+			preds = np.round(preds[0], 3)
 			print(preds)
 			# print("PREDS shape: ")
 			# print(preds[0][0])
@@ -221,7 +221,7 @@ class EARS(object):
 			# print(preds[0][2])
 			# print(preds[0][3])
 			label = CLASS_LABELS[preds.argmax()]
-			print("NEW LABEL IS: " + label)
+			#print("NEW LABEL IS: " + label)
 			self.currentEmotion = label
 			self.emotionTrajectory.append(label)
 
