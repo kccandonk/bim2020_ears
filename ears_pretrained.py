@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Script for EARS system with custom emotion classifier
+# Script for EARS system with pre-trained emotion classifier
 
 import time
 import datetime
@@ -44,7 +44,7 @@ BATCH_SIZE = 16
 FACE_CLASSIFIER = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
 # set emotion labels
-CLASS_LABELS = {0: 'angry', 1: 'happy', 2: 'sad', 3: 'neutral'} 
+CLASS_LABELS = {0: 'mad', 1: 'NA', 2: 'NA', 3: 'happy', 4: 'sad', 5: 'NA', 6: 'neutral'}
 
 # loading Dlib predictor (http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2") and preparing arrays
 print( "preparing")
@@ -95,7 +95,7 @@ class EARS(object):
 		self.hasSpoken = False #keep track of whether or not user has spoken
 		self.runningSilence = 0 #keep track of current length of silence
 		self.keepGoing = True #end script when False
-		self.classifier = tf.keras.models.load_model('./emotion_classifier_models/ears_model_full_model_big_dataset_12-08-2020-15-30.hdf5') #last from drive
+		self.classifier = tf.keras.models.load_model('./emotion_classifier_models/_mini_xception.100_0.65.hdf5') #from: https://github.com/kumarnikhil936/Facial-Emotion-Recognition
 		self.cap = cv2.VideoCapture(0)
 
 	def run(self):
@@ -219,6 +219,10 @@ class EARS(object):
 			frame_landmarks = np.expand_dims(frame_landmarks, axis=0)
 			# make a prediction on the ROI and landmarks, then lookup the class
 			preds = self.classifier.predict([roi, frame_landmarks], batch_size=BATCH_SIZE)
+			#zero out emotions our system doesn't have
+			preds[0][1] = 0 #disgust
+			preds[0][2] = 0 #fear
+			preds[0][5] = 0 #suprise
 			preds = np.round(preds[0], 3)
 			label = CLASS_LABELS[preds.argmax()]
 			self.currentEmotion = label
