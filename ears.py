@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # Script for EARS system
 # emotion detection adapted from: https://github.com/priya-dwivedi/face_and_emotion_detection
-# model adapted from: https://github.com/kumarnikhil936/Facial-Emotion-Recognition
+
 
 import time
 import datetime
@@ -11,50 +11,50 @@ import webrtcvad
 import sys
 import os
 import dlib
-
 import imageio
-#from PIL import Image 
-
 import pygame
-
 from collections import Counter
-
 import tensorflow as tf
-
 import cv2
 import numpy as np
 from tensorflow.keras.preprocessing.image import img_to_array
 
+# set directory values
+CWD = ""
+MAIN_DIR = os.getcwd()
 
 # define RGB for white
 WHITE = (255, 255, 255)
 # set width and height for display
 X = 600
 Y = 600
+
+# set audio thresholds
 START_THRESHOLD = 3
 SILENCE_THRESHOLD = 3
-
+# initialize fixed values for audio input collection
 CHUNK = 480
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
 RECORD_SECONDS = 0.5
-BATCH_SIZE = 16
-CWD = ""
-MAIN_DIR = os.getcwd()
 
+# set batch_size for predictions
+BATCH_SIZE = 16
+
+# pull in Haar Cascade Frontal Face Detector: https://github.com/opencv/opencv/blob/master/data/haarcascades/haarcascade_frontalface_default.xml
 FACE_CLASSIFIER = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
-#CLASS_LABELS = {0: 'mad', 1: 'NA', 2: 'NA', 3: 'happy', 4: 'sad', 5: 'NA', 6: 'neutral'}
-#CLASS_LABELS = {0: 'mad', 3: 'happy', 4: 'sad', 6: 'neutral'}
-CLASS_LABELS = {0: 'angry', 1: 'happy', 2: 'sad', 3: 'neutral'} #because of one hot incoding
-#Angry, Happy, Sad, and Neutral
+# set emotion labels
+CLASS_LABELS = {0: 'angry', 1: 'happy', 2: 'sad', 3: 'neutral'} 
 
-# loading Dlib predictor and preparing arrays:
+# loading Dlib predictor (http://dlib.net/files/shape_predictor_68_face_landmarks.dat.bz2") and preparing arrays
 print( "preparing")
-predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
+PREDICTOR = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
+
 
 def return_frame_landmarks(cropped_image):
+	# adapted from: https://raw.githubusercontent.com/amineHorseman/facial-expression-recognition-using-cnn/master/predict.py
 	os.chdir('./temp_files')
 	CWD = os.getcwd()
 	imageio.imwrite('temp.jpg', cropped_image)
@@ -65,29 +65,27 @@ def return_frame_landmarks(cropped_image):
 	return face_landmarks
 
 def get_landmarks(image, rects):
-    # this function have been copied from http://bit.ly/2cj7Fpq
+    # this function has been copied from: http://bit.ly/2cj7Fpq
     if len(rects) > 1:
         raise BaseException("TooManyFaces")
     if len(rects) == 0:
         raise BaseException("NoFaces")
-    return np.matrix([[p.x, p.y] for p in predictor(image, rects[0]).parts()])
+    return np.matrix([[p.x, p.y] for p in PREDICTOR(image, rects[0]).parts()])
 
 def face_detector(img):
-	    # Convert image to grayscale
-	    gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-	    faces = FACE_CLASSIFIER.detectMultiScale(gray, 1.3, 5)
-	    if faces == ():
-	        return (0,0,0,0), np.zeros((48,48), np.uint8), img
-	    
-	    for (x,y,w,h) in faces:
-	        cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
-	        roi_gray = gray[y:y+h, x:x+w]
-
-	    try:
-	        roi_gray = cv2.resize(roi_gray, (48, 48), interpolation = cv2.INTER_AREA)
-	    except:
-	        return (x,w,y,h), np.zeros((48,48), np.uint8), img
-	    return (x,w,y,h), roi_gray, img
+	# from: https://github.com/priya-dwivedi/face_and_emotion_detection/blob/master/src/EmotionDetector_v2.ipynb
+	gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+	faces = FACE_CLASSIFIER.detectMultiScale(gray, 1.3, 5)
+	if faces == ():
+		return (0,0,0,0), np.zeros((48,48), np.uint8), img
+	for (x,y,w,h) in faces:
+		cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
+		roi_gray = gray[y:y+h, x:x+w]
+	try:
+		roi_gray = cv2.resize(roi_gray, (48, 48), interpolation = cv2.INTER_AREA)
+	except:
+		return (x,w,y,h), np.zeros((48,48), np.uint8), img
+	return (x,w,y,h), roi_gray, img
 
 class EARS(object):
 
@@ -96,15 +94,16 @@ class EARS(object):
 		self.emotionTrajectory = []
 		self.currentEmotion = "neutral"
 		self.audio_counter = 0
-		self.hasSpoken = False
-		self.runningSilence = 0
-		self.keepGoing = True
-		#self.classifier = tf.keras.models.load_model('./emotion_classifier_models/_mini_xception.100_0.65.hdf5') #model_v6_23.hdf5')
+		self.hasSpoken = False #keep track of whether or not user has spoken
+		self.runningSilence = 0 #keep track of current length of silence
+		self.keepGoing = True #end script when False
 		self.classifier = tf.keras.models.load_model('./emotion_classifier_models/ears_model_full_model_big_dataset_12-08-2020-15-30.hdf5') #last from drive')
 		self.cap = cv2.VideoCapture(0)
 
 	def run(self):
+		# continous loop to run virtual agent until interaction is over
 		pygame.init()
+		# set up display
 		display_surface = pygame.display.set_mode((X,Y))
 		pygame.display.set_caption('EARS')
 		prompt = pygame.image.load('images/EARS_initial.jpg')
@@ -113,13 +112,17 @@ class EARS(object):
 		prompt_center_x = X/2 - prompt_x/2
 		prompt_center_y = Y/2 - prompt_y/2
 		display_surface.fill(WHITE)
+		# show initial prompt
 		display_surface.blit(prompt,(prompt_center_x,prompt_center_y))
 		pygame.display.update()
+		# start timer
 		self.startTime = time.time()
+		#continuous loop
 		while self.keepGoing:
 			self.audio_check()
 			self.predict_emotions()
-			image = self.responsePolicy()
+			# set up display image
+			image = self.responseReaction()
 			im_x = image.get_width()
 			im_y = image.get_height()
 			center_x = X/2 - im_x/2
@@ -127,35 +130,48 @@ class EARS(object):
 			display_surface.fill(WHITE)
 			display_surface.blit(image,(center_x,center_y))
 			pygame.display.update()
+			# end script after 4 seconds if interaction has ended
 			if self.keepGoing == False:
 				self.cap.release()
 				cv2.destroyAllWindows()
-				time.sleep(2)
+				time.sleep(5)
 
-	def responsePolicy(self):
+	def responseReaction(self):
 		elapsed_time = time.time()-self.startTime
 		os.chdir(MAIN_DIR)
+		# check if have not yet met start threshold or user hasn't started speaking
 		if elapsed_time < START_THRESHOLD or self.hasSpoken==False:
+			# display initial prompt
 			image = pygame.image.load('images/EARS_initial.jpg')
+		# check if user still speaking
 		elif self.runningSilence < SILENCE_THRESHOLD:
+			# display cartoon face for current emotion
 			image = pygame.image.load('images/emotion_faces/'+self.currentEmotion+'.jpg')
+		# otherwise (silence threshold has been met)
 		else:
+			# gather appropriate response
 			response_filename = self.retrieveResponse()
 			image = pygame.image.load('images/responses/'+response_filename+'.jpg')
+			# tell system interaction is over
 			self.keepGoing = False
 		return image
 
 	def retrieveResponse(self):
+		# create counter for emotions over entire interaction
 		counts = Counter()
 		counts.update(self.emotionTrajectory)
+		# find most common emotions
 		most_common = counts.most_common(1)[0][0]
+		# create counter for emotions in last quarter of interaction
 		end_counts = Counter()
 		end_counts.update(self.emotionTrajectory[int(len(self.emotionTrajectory)/4)*3:])
 		most_common_end = end_counts.most_common(1)[0][0]
+		# pull image based on most common overall and of last quarter
 		response_filename = most_common+"_endon_"+most_common_end
 		return response_filename
 
 	def audio_check(self):
+		# adapted from: "Record" example from https://people.csail.mit.edu/hubert/pyaudio/
 		
 		p = pyaudio.PyAudio()
 		vad = webrtcvad.Vad(3)
@@ -171,15 +187,18 @@ class EARS(object):
 			data = stream.read(CHUNK)
 			frames.append(data)
 			silence_or_speech.append(vad.is_speech(data,RATE))
-
+		# if speech has been detected, update indicator
 		if True in silence_or_speech:
 			self.hasSpoken=True
-
+		# see what percent of clips were identified as speech
 		percent_speaking = float(sum(silence_or_speech))/len(silence_or_speech)
-
+		# if at least 25% of clips are speech, 0.5s increment is considered speech
 		if percent_speaking >= 0.25 or self.hasSpoken==False:
+			# reset runningSilence
 			self.runningSilence = 0
+		# otherwise, 0.5s increment is considered silence
 		else:
+			# increment runningSilence
 			self.runningSilence += RECORD_SECONDS
 
 		stream.stop_stream()
@@ -189,6 +208,7 @@ class EARS(object):
 		self.audio_counter = self.audio_counter+1
 
 	def predict_emotions(self):
+		# adapted from: https://github.com/priya-dwivedi/face_and_emotion_detection/blob/master/src/EmotionDetector_v2.ipynb
 		print("predict")
 		ret, frame = self.cap.read()
 		rect, face, image = face_detector(frame) #image is the same as frame
@@ -201,14 +221,8 @@ class EARS(object):
 			frame_landmarks = np.expand_dims(frame_landmarks, axis=0)
 			# make a prediction on the ROI and landmarks, then lookup the class
 			preds = self.classifier.predict([roi, frame_landmarks], batch_size=BATCH_SIZE)
-			#angry, Happy, Sad, and Neutral
-			# preds[1] = 0
-			# preds[2] = 0
-			# preds[5] = 0
 			preds = np.round(preds[0], 3)
-			print(preds)
 			label = CLASS_LABELS[preds.argmax()]
-			#print("NEW LABEL IS: " + label)
 			self.currentEmotion = label
 			self.emotionTrajectory.append(label)
 
