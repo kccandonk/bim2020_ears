@@ -1,5 +1,7 @@
 # EARS: Emotionally-Aware Reaction System
+
 ![](images/ears_demo.gif)
+
 CPSC 459/559 Building Interactive Machines | FALL 2020 | Final Project
 
 ## Contributors
