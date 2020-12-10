@@ -4,13 +4,25 @@
 
 CPSC 459/559 Building Interactive Machines | FALL 2020 | Final Project
 
+## Overview
+EARS is a virtual agent that detects a user's emotions and responds based on the detected emotion. EARS feeds visual data into a machine learning model to classify emotions, and uses a rule-based policy based on audio and visual data to respond appropriately.
+
+More specifically, our system:
+* prompts a user to vent or tell a story;
+* captures audio and visual input;
+* uses a machine learning model to detect and classify emotions;
+* reflects the detected emotion on the screen using a cartoon face; and
+* once sustained silence is detected, uses a predefined policy to suggest an action for the user based on their emotion trajectory.
+
 ## Contributors
 - Kate Candon
 - Kaitlynn Pineda
 
 ## Repository Structure
 
-This repo contains all the code to run our emotionally-ware reaction system and work with our pretrained and custom models. It does not contain the training data. Below is an overview of the directory structure: 
+This repo contains all the code to run our emotionally-aware reaction system and work with our pretrained and custom models. It does not contain the training data.
+
+Below is an overview of the directory structure: 
 
 * ``colab_model_training_eval`` contains the google colab file used to load our data, train and evaluate our model. It includes the .ipynb file and a .py version 
 * ``emotion_classifier_models`` contains various models saved as an .hdf5 (including a pretrained model and our trained custom model) that can be loaded into our EARS system
