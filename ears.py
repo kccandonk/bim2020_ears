@@ -43,7 +43,7 @@ BATCH_SIZE = 16
 CWD = ""
 MAIN_DIR = os.getcwd()
 
-FACE_CLASSIFIER = cv2.CascadeClassifier('./Haarcascades/haarcascade_frontalface_default.xml')
+FACE_CLASSIFIER = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
 #CLASS_LABELS = {0: 'mad', 1: 'NA', 2: 'NA', 3: 'happy', 4: 'sad', 5: 'NA', 6: 'neutral'}
 #CLASS_LABELS = {0: 'mad', 3: 'happy', 4: 'sad', 6: 'neutral'}
@@ -99,8 +99,8 @@ class EARS(object):
 		self.hasSpoken = False
 		self.runningSilence = 0
 		self.keepGoing = True
-		#self.classifier = tf.keras.models.load_model('./emotion_detector_models/_mini_xception.100_0.65.hdf5') #model_v6_23.hdf5')
-		self.classifier = tf.keras.models.load_model('./emotion_detector_models/ears_model_full_model_big_dataset_12-08-2020-15-30.hdf5') #last from drive')
+		#self.classifier = tf.keras.models.load_model('./emotion_classifier_models/_mini_xception.100_0.65.hdf5') #model_v6_23.hdf5')
+		self.classifier = tf.keras.models.load_model('./emotion_classifier_models/ears_model_full_model_big_dataset_12-08-2020-15-30.hdf5') #last from drive')
 		self.cap = cv2.VideoCapture(0)
 
 	def run(self):
