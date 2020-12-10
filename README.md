@@ -77,14 +77,19 @@ $ deactivate
 ```
 
 ## Running EARS
-If your virtual environment for EARS system is not active, activate the virtual environment.
+0. If your virtual environment for EARS system is not active, activate the virtual environment.
 ```
 $ source ears_env/bin/activate
 ```
-Run the code below to autonomously start EARS. The system will close on its own when finished. Repeat the command if you wish to re-use our system.
+1. Navigate to ```bim2020_ears``` directory.
+```
+$ cd bim2020_ears
+```
+2. Run the code below to autonomously start EARS. The system will close on its own when finished. Repeat the command if you wish to re-use our system.
 ```
 $ python ears.py
 ```
+
 If you want to run the version of EARS with the pre-trained emotion classifier, you can run ```ears_pretrained.py```.
 ```
 $ python ears_pretrained.py
