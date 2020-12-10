@@ -97,7 +97,7 @@ class EARS(object):
 		self.hasSpoken = False #keep track of whether or not user has spoken
 		self.runningSilence = 0 #keep track of current length of silence
 		self.keepGoing = True #end script when False
-		self.classifier = tf.keras.models.load_model('./emotion_classifier_models/ears_model_full_model_big_dataset_12-08-2020-15-30.hdf5') #last from drive')
+		self.classifier = tf.keras.models.load_model('./emotion_classifier_models/ears_model_full_model_big_dataset_12-08-2020-15-30.hdf5') #last from drive
 		self.cap = cv2.VideoCapture(0)
 
 	def run(self):
