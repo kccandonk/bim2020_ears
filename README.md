@@ -14,6 +14,7 @@ This repo contains all the code to run our emotionally-ware reaction system and 
 
 * ``colab_model_training_eval`` contains the google colab file used to load our data, train and evaluate our model. It includes the .ipynb file and a .py version 
 * ``emotion_classifier_models`` contains various models saved as an .hdf5 (including a pretrained model and our trained custom model) that can be loaded into our EARS system
+  * ```_mini_xception.100_0.65.hdf5```: pre-trained model from [https://github.com/kumarnikhil936/Facial-Emotion-Recognition](https://github.com/kumarnikhil936/Facial-Emotion-Recognition)
 * ``images`` contains: 
    * ears_demo.gif: gif demonstrating system
    * EARS_initial.jpg: the intial image displayed by our virtual agent when running the system
