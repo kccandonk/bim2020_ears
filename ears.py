@@ -47,8 +47,8 @@ FACE_CLASSIFIER = cv2.CascadeClassifier('./Haarcascades/haarcascade_frontalface_
 
 #CLASS_LABELS = {0: 'mad', 1: 'NA', 2: 'NA', 3: 'happy', 4: 'sad', 5: 'NA', 6: 'neutral'}
 #CLASS_LABELS = {0: 'mad', 3: 'happy', 4: 'sad', 6: 'neutral'}
-CLASS_LABELS = {0: 'mad', 1: 'happy', 2: 'sad', 3: 'neutral'} #because of one hot incoding
-#ngry, Happy, Sad, and Neutral
+CLASS_LABELS = {0: 'angry', 1: 'happy', 2: 'sad', 3: 'neutral'} #because of one hot incoding
+#Angry, Happy, Sad, and Neutral
 
 # loading Dlib predictor and preparing arrays:
 print( "preparing")
@@ -76,7 +76,7 @@ def face_detector(img):
 	    # Convert image to grayscale
 	    gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 	    faces = FACE_CLASSIFIER.detectMultiScale(gray, 1.3, 5)
-	    if faces is ():
+	    if faces == ():
 	        return (0,0,0,0), np.zeros((48,48), np.uint8), img
 	    
 	    for (x,y,w,h) in faces:
@@ -138,10 +138,10 @@ class EARS(object):
 		if elapsed_time < START_THRESHOLD or self.hasSpoken==False:
 			image = pygame.image.load('images/EARS_initial.jpg')
 		elif self.runningSilence < SILENCE_THRESHOLD:
-			image = pygame.image.load('render_faces/emotion_faces/'+self.currentEmotion+'.jpg')
+			image = pygame.image.load('images/emotion_faces/'+self.currentEmotion+'.jpg')
 		else:
 			response_filename = self.retrieveResponse()
-			image = pygame.image.load('responses/'+response_filename+'.jpg')
+			image = pygame.image.load('images/responses/'+response_filename+'.jpg')
 			self.keepGoing = False
 		return image
 
