@@ -52,7 +52,7 @@ $ source ears_env/bin/activate
 ```
 3. Navigate to ```bim2020_ears``` directory.
 ```
-$cd bim2020_ears
+$ cd bim2020_ears
 ```
 4. Install necessary packages with ```EARS_install_python_deps.sh```.
 ```
